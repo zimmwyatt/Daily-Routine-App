@@ -1,5 +1,4 @@
 const STORAGE_KEY = "daily-routine-tracker-v1";
-const RING_CIRCUMFERENCE = 2 * Math.PI * 48;
 
 const defaultTasks = [
   { id: crypto.randomUUID(), name: "Wake up and stretch", time: "07:00", completedDays: {} },
@@ -18,8 +17,8 @@ const clearDoneButton = document.querySelector("#clearDoneButton");
 const todayLabel = document.querySelector("#todayLabel");
 const progressPercent = document.querySelector("#progressPercent");
 const progressText = document.querySelector("#progressText");
+const progressFill = document.querySelector("#progressFill");
 const sectionMeta = document.querySelector("#sectionMeta");
-const ringFill = document.querySelector(".ring-fill");
 
 let state = loadState();
 
@@ -212,9 +211,7 @@ function updateProgress(sortedTasks) {
       ? "Everything for today is checked off."
       : "Tap a circle to mark something done.";
 
-  const offset = RING_CIRCUMFERENCE - (percent / 100) * RING_CIRCUMFERENCE;
-  ringFill.style.strokeDasharray = `${RING_CIRCUMFERENCE}`;
-  ringFill.style.strokeDashoffset = `${offset}`;
+  progressFill.style.width = `${percent}%`;
 }
 
 function render() {
@@ -283,3 +280,4 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
+
