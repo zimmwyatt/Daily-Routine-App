@@ -1,23 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Daily Routine Tracker</title>
+  <meta name="theme-color" content="#f2efe8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Routine">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="description" content="A simple daily routine tracker you can save to your phone.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
   <main class="app-shell">
     <header class="hero">
       <p class="eyebrow" id="todayLabel">Today</p>
-      <div class="hero-row">
       <div class="hero-copy">
         <div>
           <h1>Daily Routine</h1>
-          <p class="subtitle">Keep your day moving one tap at a time.</p>
           <p class="subtitle">Keep your day moving one tap at a time with a calm, focused checklist.</p>
         </div>
-        <div class="progress-card" aria-live="polite">
-          <div class="progress-ring">
-            <svg viewBox="0 0 120 120" class="ring-svg" aria-hidden="true">
-              <circle class="ring-track" cx="60" cy="60" r="48"></circle>
-              <circle class="ring-fill" cx="60" cy="60" r="48"></circle>
-            </svg>
-            <div class="ring-label">
-              <strong id="progressPercent">0%</strong>
-              <span>done</span>
-            </div>
       </div>
       <div class="progress-card" aria-live="polite">
         <div class="progress-head">
@@ -25,7 +31,6 @@
             <p class="progress-label">Today's Progress</p>
             <strong id="progressText">0 of 0 tasks complete</strong>
           </div>
-          <p id="progressText">0 of 0 tasks complete</p>
           <span id="progressPercent" class="progress-percent">0%</span>
         </div>
         <div class="progress-bar" aria-hidden="true">
@@ -33,3 +38,50 @@
         </div>
       </div>
     </header>
+
+    <section class="card controls">
+      <form id="taskForm" class="task-form">
+        <label>
+          <span>Task</span>
+          <input id="taskName" name="taskName" type="text" maxlength="60" placeholder="Drink water" required>
+        </label>
+        <label>
+          <span>Time</span>
+          <input id="taskTime" name="taskTime" type="time">
+        </label>
+        <button type="submit">Add Routine Item</button>
+      </form>
+      <div class="controls-row">
+        <button id="resetDayButton" class="secondary" type="button">Reset Today</button>
+        <button id="clearDoneButton" class="ghost" type="button">Remove Completed</button>
+      </div>
+    </section>
+
+    <section class="routine-section">
+      <div class="section-heading">
+        <h2>Today's Checklist</h2>
+        <p id="sectionMeta">Tap a circle to mark something done.</p>
+      </div>
+      <ul id="taskList" class="task-list" aria-live="polite"></ul>
+    </section>
+  </main>
+
+  <template id="taskTemplate">
+    <li class="task-item">
+      <button class="toggle" type="button" aria-label="Mark task complete"></button>
+      <div class="task-copy">
+        <div class="task-topline">
+          <strong class="task-name"></strong>
+          <span class="task-time"></span>
+        </div>
+        <div class="task-meta">
+          <span class="status-pill">Pending</span>
+        </div>
+      </div>
+      <button class="delete-button" type="button" aria-label="Delete task">Delete</button>
+    </li>
+  </template>
+
+  <script src="script.js"></script>
+</body>
+</html>
