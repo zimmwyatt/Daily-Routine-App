@@ -57,9 +57,9 @@ p {
 }
 
 .hero {
-  padding: 20px 4px 18px;
+  padding: 22px 4px 16px;
   display: grid;
-  gap: 18px;
+  gap: 16px;
 }
 
 .hero-copy {
@@ -79,15 +79,7 @@ p {
 h1 {
   font-size: clamp(2.4rem, 7vw, 3.6rem);
   line-height: 0.92;
-  letter-spacing: -0.06em;
-}
-
-.subtitle {
-  margin: 14px auto 0;
-  max-width: 30rem;
-  color: var(--muted);
-  line-height: 1.55;
-  font-size: 1rem;
+  letter-spacing: 0.08em;
 }
 
 .card,
@@ -100,7 +92,7 @@ h1 {
 
 .progress-card {
   border-radius: var(--radius-2xl);
-  padding: 20px;
+  padding: 18px 20px;
   box-shadow: var(--shadow-lg);
 }
 
@@ -155,12 +147,12 @@ h1 {
 
 .card {
   border-radius: var(--radius-2xl);
-  padding: 20px;
+  padding: 18px 20px 20px;
   box-shadow: var(--shadow-md);
 }
 
 .controls {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .task-form {
@@ -213,25 +205,6 @@ h1 {
   color: white;
   font-weight: 700;
   box-shadow: 0 10px 24px rgba(37, 95, 74, 0.24);
-}
-
-.controls-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.controls-row button {
-  padding: 0 16px;
-  background: var(--accent-soft);
-  color: var(--ink);
-  font-weight: 600;
-}
-
-.controls-row .ghost {
-  background: rgba(255, 255, 255, 0.48);
-  border: 1px solid var(--line);
 }
 
 .routine-section {
@@ -371,7 +344,7 @@ button:hover {
   }
 
   .hero {
-    gap: 16px;
+    gap: 14px;
     padding-top: 12px;
   }
 
