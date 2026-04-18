@@ -3,6 +3,7 @@
   --bg: #f5f1e8;
   --bg-deep: #ebe4d6;
   --panel: rgba(255, 252, 247, 0.82);
+  --panel-solid: rgba(255, 251, 245, 0.98);
   --ink: #1d2b24;
   --muted: #66756b;
   --line: rgba(29, 43, 36, 0.1);
@@ -86,7 +87,8 @@ h1 {
 
 .card,
 .progress-card,
-.task-item {
+.task-row-shell,
+.task-panel {
   background: var(--panel);
   backdrop-filter: blur(18px);
   border: 1px solid rgba(255, 255, 255, 0.58);
@@ -106,12 +108,16 @@ h1 {
   margin-bottom: 14px;
 }
 
-.progress-label {
+.progress-label,
+.panel-label {
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+}
+
+.progress-label {
   margin-bottom: 6px;
 }
 
@@ -163,7 +169,8 @@ h1 {
   gap: 12px;
 }
 
-.task-form label {
+.task-form label,
+.field-block {
   display: grid;
   gap: 8px;
   color: var(--muted);
@@ -171,41 +178,69 @@ h1 {
   font-weight: 600;
 }
 
-.task-form input {
+.task-form input,
+.edit-task-name,
+.edit-task-time,
+.note-input {
   width: 100%;
-  min-height: 52px;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.78);
   color: var(--ink);
-  padding: 14px 16px;
   outline: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  box-shadow: var(--input-shadow);
+  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease, transform 120ms ease;
 }
 
-.task-form input:focus {
-  border-color: rgba(37, 95, 74, 0.3);
-  box-shadow: 0 0 0 4px rgba(37, 95, 74, 0.08);
+.task-form input,
+.edit-task-name,
+.edit-task-time {
+  min-height: 48px;
+  padding: 12px 14px;
+}
+
+.note-input {
+  min-height: 104px;
+  resize: vertical;
+  padding: 12px 14px;
+}
+
+.task-form input:focus,
+.edit-task-name:focus,
+.edit-task-time:focus,
+.note-input:focus {
+  border-color: rgba(37, 95, 74, 0.28);
+  box-shadow: 0 12px 28px rgba(80, 88, 70, 0.12), 0 0 0 4px rgba(37, 95, 74, 0.07);
   background: white;
+  transform: translateY(-1px);
 }
 
 .task-form button,
 .toggle,
 .icon-button,
-.save-note-button {
+.save-note-button,
+.save-task-button {
   border: none;
   cursor: pointer;
   transition: transform 120ms ease, opacity 120ms ease, background 120ms ease, box-shadow 120ms ease;
 }
 
-.task-form button {
-  align-self: end;
-  min-height: 52px;
-  padding: 0 22px;
+.task-form button,
+.save-note-button,
+.save-task-button {
+  min-height: 44px;
+  padding: 0 18px;
   border-radius: 999px;
   background: var(--accent);
   color: white;
   font-weight: 700;
+  box-shadow: 0 10px 24px rgba(37, 95, 74, 0.18);
+}
+
+.task-form button {
+  min-height: 52px;
+  padding: 0 22px;
+  align-self: end;
   box-shadow: 0 10px 24px rgba(37, 95, 74, 0.24);
 }
 
@@ -233,20 +268,21 @@ h1 {
   padding: 0;
   margin: 0;
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .task-item {
   display: grid;
-  gap: 0;
-  padding: 0;
+  gap: 8px;
+}
+
+.task-row-shell {
   border-radius: 999px;
-  overflow: hidden;
   box-shadow: var(--shadow-md);
   transition: background 180ms ease, box-shadow 180ms ease;
 }
 
-.task-item.is-complete {
+.task-item.is-complete .task-row-shell {
   background: var(--success-row);
 }
 
@@ -334,53 +370,57 @@ h1 {
   box-shadow: var(--shadow-sm);
 }
 
+.edit-task-button,
 .note-button {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .delete-button {
   background: var(--danger-soft);
 }
 
-.note-panel {
-  display: none;
-}
-
-.task-item.note-open .note-panel {
+.panel-stack {
   display: grid;
+  gap: 8px;
 }
 
-.note-panel-inner {
-  padding: 0 12px 12px;
-}
-
-.note-view,
-.note-edit {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(252, 247, 239, 0.95) 100%);
-  border: 1px solid rgba(29, 43, 36, 0.07);
-  border-radius: 20px;
+.task-panel {
+  display: none;
+  border-radius: 18px;
   box-shadow: var(--shadow-sm);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.78) 0%, rgba(252, 247, 239, 0.95) 100%);
+}
+
+.task-item.note-open .note-panel,
+.task-item.edit-open .edit-panel {
+  display: block;
+}
+
+.panel-inner {
   padding: 12px;
 }
 
-.note-view-header,
-.note-edit-actions {
+.note-view,
+.note-edit,
+.edit-form {
+  display: grid;
+  gap: 10px;
+}
+
+.panel-header,
+.panel-actions {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
 }
 
-.note-label {
-  color: var(--muted);
-  font-size: 0.76rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.panel-actions {
+  justify-content: flex-end;
+  margin-top: 2px;
 }
 
 .note-content {
-  margin-top: 8px;
   color: var(--ink);
   line-height: 1.5;
   white-space: pre-wrap;
@@ -390,51 +430,8 @@ h1 {
   color: #8a968f;
 }
 
-.note-edit {
-  display: grid;
-  gap: 10px;
-}
-
-.note-field {
-  display: grid;
-  gap: 8px;
-}
-
-.note-input {
-  width: 100%;
-  min-height: 104px;
-  resize: vertical;
-  appearance: none;
-  -webkit-appearance: none;
-  border: 1px solid rgba(29, 43, 36, 0.08);
-  border-radius: 18px;
-  background: linear-gradient(180deg, #ffffff 0%, #fbfaf7 100%);
-  color: var(--ink);
-  padding: 12px 14px;
-  outline: none;
-  box-shadow: var(--input-shadow);
-  transition: border-color 140ms ease, box-shadow 180ms ease, transform 180ms ease, background 140ms ease;
-}
-
-.note-input::placeholder {
-  color: #97a39b;
-}
-
-.note-input:focus {
-  border-color: rgba(37, 95, 74, 0.18);
-  background: #ffffff;
-  box-shadow: 0 12px 28px rgba(80, 88, 70, 0.12), 0 0 0 4px rgba(37, 95, 74, 0.07);
-  transform: translateY(-1px);
-}
-
-.save-note-button {
-  min-height: 40px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: white;
-  font-weight: 700;
-  box-shadow: 0 10px 24px rgba(37, 95, 74, 0.18);
+.edit-form {
+  grid-template-columns: 1fr 148px;
 }
 
 button:active {
@@ -456,7 +453,8 @@ button:hover {
   }
 
   .progress-head,
-  .task-form {
+  .task-form,
+  .edit-form {
     grid-template-columns: 1fr;
     display: grid;
   }
@@ -489,7 +487,7 @@ button:hover {
     font-size: 0.8rem;
   }
 
-  .note-panel-inner {
-    padding: 0 10px 10px;
+  .panel-inner {
+    padding: 10px;
   }
 }
