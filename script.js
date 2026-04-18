@@ -55,12 +55,15 @@ function persistState(nextState = state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(nextState));
 }
 
-function getTodayKey() {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const day = String(today.getDate()).padStart(2, "0");
+function getDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+function getTodayKey() {
+  return getDateKey(new Date());
 }
 
 function formatTodayLabel() {
@@ -135,10 +138,7 @@ function getTaskStreak(task) {
   const cursor = new Date();
 
   while (true) {
-    const year = cursor.getFullYear();
-    const month = String(cursor.getMonth() + 1).padStart(2, "0");
-    const day = String(cursor.getDate()).padStart(2, "0");
-    const key = `${year}-${month}-${day}`;
+    const key = getDateKey(cursor);
     if (!task.completedDays[key]) {
       break;
     }
@@ -177,16 +177,7 @@ function deleteTask(taskId) {
   render();
 }
 
-function toggleTaskNote(taskId) {
-  if (openNotes.has(taskId)) {
-    openNotes.delete(taskId);
-  } else {
-    openNotes.add(taskId);
-  }
-  render();
-}
-
-function saveTaskNote(taskId, note) {
+function updateTaskNote(taskId, note) {
   state = {
     ...state,
     tasks: state.tasks.map((task) =>
@@ -196,5 +187,120 @@ function saveTaskNote(taskId, note) {
     )
   };
   persistState();
-  openNotes.add(task
+}
+
+function toggleTaskNote(taskId) {
+  if (openNotes.has(taskId)) {
+    openNotes.delete(taskId);
+  } else {
+    openNotes.add(taskId);
+  }
+  render();
+}
+
+function updateProgress(sortedTasks) {
+  const total = sortedTasks.length;
+  const completed = sortedTasks.filter(isTaskDoneToday).length;
+  const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+  progressPercent.textContent = `${percent}%`;
+  progressText.textContent = `${completed} of ${total} tasks complete`;
+  sectionMeta.textContent = total === 0
+    ? "Add your first routine item above."
+    : completed === total
+      ? "Everything for today is checked off."
+      : "Tap a circle to mark something done.";
+
+  progressFill.style.width = `${percent}%`;
+}
+
+function createNotePanelContent(panel, note, taskId) {
+  panel.innerHTML = `
+    <div class="note-panel-inner">
+      <label class="note-field">
+        <span class="note-label">Note</span>
+        <textarea class="note-input" rows="4" placeholder="Add a note or description for this task..."></textarea>
+      </label>
+    </div>
+  `;
+
+  const noteInput = panel.querySelector(".note-input");
+  noteInput.value = note;
+  noteInput.addEventListener("input", (event) => {
+    updateTaskNote(taskId, event.target.value);
+  });
+}
+
+function render() {
+  const sortedTasks = sortTasks(state.tasks);
+  taskList.innerHTML = "";
+
+  for (const task of sortedTasks) {
+    const fragment = taskTemplate.content.cloneNode(true);
+    const item = fragment.querySelector(".task-item");
+    const toggle = fragment.querySelector(".toggle");
+    const name = fragment.querySelector(".task-name");
+    const time = fragment.querySelector(".task-time");
+    const statusPill = fragment.querySelector(".status-pill");
+    const noteButton = fragment.querySelector(".note-button");
+    const deleteButton = fragment.querySelector(".delete-button");
+    const notePanel = fragment.querySelector(".note-panel");
+
+    const doneToday = isTaskDoneToday(task);
+    const streak = getTaskStreak(task);
+    const noteIsOpen = openNotes.has(task.id);
+
+    item.dataset.id = task.id;
+    item.classList.toggle("is-complete", doneToday);
+    item.classList.toggle("note-open", noteIsOpen);
+    name.textContent = task.name;
+    time.textContent = formatTime(task.time);
+    toggle.setAttribute("aria-pressed", String(doneToday));
+    noteButton.textContent = "Add Note";
+    noteButton.setAttribute("aria-expanded", String(noteIsOpen));
+    statusPill.textContent = doneToday
+      ? streak > 1
+        ? `${streak} day streak`
+        : "Done today"
+      : streak > 0
+        ? `Last streak: ${streak} day${streak === 1 ? "" : "s"}`
+        : "Pending";
+
+    createNotePanelContent(notePanel, task.note, task.id);
+
+    toggle.addEventListener("click", () => setTaskDone(task.id, !doneToday));
+    noteButton.addEventListener("click", () => toggleTaskNote(task.id));
+    deleteButton.addEventListener("click", () => deleteTask(task.id));
+
+    taskList.appendChild(fragment);
+  }
+
+  updateProgress(sortedTasks);
+}
+
+taskForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const name = taskNameInput.value.trim();
+  const time = taskTimeInput.value;
+
+  if (!name) {
+    taskNameInput.focus();
+    return;
+  }
+
+  addTask(name, time);
+  taskForm.reset();
+  taskNameInput.focus();
+});
+
+formatTodayLabel();
+render();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {
+      // If registration fails, the app still works as a normal static site.
+    });
+  });
+}
 
