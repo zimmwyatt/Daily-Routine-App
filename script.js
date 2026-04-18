@@ -141,22 +141,6 @@ function setTaskDone(taskId, done) {
   render();
 }
 
-function getTaskStreak(task) {
-  let streak = 0;
-  const cursor = new Date();
-
-  while (true) {
-    const key = getDateKey(cursor);
-    if (!task.completedDays[key]) {
-      break;
-    }
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-
-  return streak;
-}
-
 function addTask(name, time) {
   state = {
     ...state,
@@ -274,17 +258,15 @@ function renderTaskNote(task, notePanel) {
 
   noteView.hidden = isEditing;
   noteEdit.hidden = !isEditing;
-
   noteContent.textContent = savedNote || "No note added";
   noteContent.classList.toggle("is-empty", !savedNote);
-
   noteInput.value = draftNote;
 
-  editNoteButton.addEventListener("click", () => enterEditMode(task.id));
-  noteInput.addEventListener("input", (event) => {
+  editNoteButton.onclick = () => enterEditMode(task.id);
+  noteInput.oninput = (event) => {
     updateNoteDraft(task.id, event.target.value);
-  });
-  saveNoteButton.addEventListener("click", () => saveTaskNote(task.id));
+  };
+  saveNoteButton.onclick = () => saveTaskNote(task.id);
 }
 
 function render() {
@@ -297,13 +279,11 @@ function render() {
     const toggle = fragment.querySelector(".toggle");
     const time = fragment.querySelector(".task-time");
     const name = fragment.querySelector(".task-name");
-    const statusPill = fragment.querySelector(".status-pill");
     const noteButton = fragment.querySelector(".note-button");
     const deleteButton = fragment.querySelector(".delete-button");
     const notePanel = fragment.querySelector(".note-panel");
 
     const doneToday = isTaskDoneToday(task);
-    const streak = getTaskStreak(task);
     const noteIsOpen = openNotes.has(task.id);
 
     item.dataset.id = task.id;
@@ -312,23 +292,14 @@ function render() {
 
     toggle.setAttribute("aria-pressed", String(doneToday));
     noteButton.setAttribute("aria-expanded", String(noteIsOpen));
-
     time.textContent = formatTime(task.time);
     name.textContent = task.name;
 
-    statusPill.textContent = doneToday
-      ? streak > 1
-        ? `${streak} day streak`
-        : "Done today"
-      : streak > 0
-        ? `Last streak: ${streak} day${streak === 1 ? "" : "s"}`
-        : "Pending";
-
     renderTaskNote(task, notePanel);
 
-    toggle.addEventListener("click", () => setTaskDone(task.id, !doneToday));
-    noteButton.addEventListener("click", () => toggleTaskNote(task.id));
-    deleteButton.addEventListener("click", () => deleteTask(task.id));
+    toggle.onclick = () => setTaskDone(task.id, !doneToday);
+    noteButton.onclick = () => toggleTaskNote(task.id);
+    deleteButton.onclick = () => deleteTask(task.id);
 
     taskList.appendChild(fragment);
   }
@@ -336,7 +307,7 @@ function render() {
   updateProgress(sortedTasks);
 }
 
-taskForm.addEventListener("submit", (event) => {
+taskForm.onsubmit = (event) => {
   event.preventDefault();
 
   const name = taskNameInput.value.trim();
@@ -350,7 +321,7 @@ taskForm.addEventListener("submit", (event) => {
   addTask(name, time);
   taskForm.reset();
   taskNameInput.focus();
-});
+};
 
 formatTodayLabel();
 render();
@@ -362,4 +333,3 @@ if ("serviceWorker" in navigator) {
     });
   });
 }
-
