@@ -41,7 +41,8 @@ body {
 }
 
 button,
-input {
+input,
+textarea {
   font: inherit;
 }
 
@@ -236,12 +237,18 @@ h1 {
 
 .task-item {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: 16px;
-  align-items: center;
+  gap: 14px;
   padding: 16px;
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.task-main {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 16px;
+  align-items: center;
 }
 
 .toggle {
@@ -256,119 +263,3 @@ h1 {
   content: "";
   position: absolute;
   inset: 9px;
-  border-radius: 50%;
-  background: transparent;
-  transition: background 120ms ease;
-}
-
-.task-item.is-complete .toggle {
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.task-item.is-complete .toggle::after {
-  background: white;
-}
-
-.task-copy {
-  min-width: 0;
-}
-
-.task-topline {
-  display: flex;
-  gap: 10px;
-  align-items: baseline;
-  justify-content: space-between;
-}
-
-.task-name {
-  font-size: 1rem;
-  letter-spacing: -0.01em;
-}
-
-.task-time {
-  flex-shrink: 0;
-  color: var(--accent-warm);
-  font-size: 0.85rem;
-  font-weight: 700;
-}
-
-.task-meta {
-  margin-top: 10px;
-}
-
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  min-height: 30px;
-  padding: 0 11px;
-  border-radius: 999px;
-  background: rgba(37, 95, 74, 0.08);
-  color: var(--muted);
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.task-item.is-complete {
-  background: rgba(238, 247, 241, 0.84);
-}
-
-.task-item.is-complete .task-name {
-  text-decoration: line-through;
-  color: var(--muted);
-}
-
-.task-item.is-complete .status-pill {
-  background: var(--accent-soft-strong);
-  color: var(--accent);
-}
-
-.delete-button {
-  padding: 0 14px;
-  background: rgba(173, 84, 84, 0.1);
-  color: var(--danger);
-  font-weight: 700;
-}
-
-button:active {
-  transform: scale(0.985);
-}
-
-button:hover {
-  opacity: 0.96;
-}
-
-@media (max-width: 640px) {
-  body {
-    padding: 16px 12px 32px;
-  }
-
-  .hero {
-    gap: 14px;
-    padding-top: 12px;
-  }
-
-  .progress-head,
-  .task-form {
-    grid-template-columns: 1fr;
-    display: grid;
-  }
-
-  .progress-percent {
-    text-align: left;
-    min-width: 0;
-  }
-
-  .task-form button {
-    width: 100%;
-  }
-
-  .task-item {
-    grid-template-columns: auto 1fr;
-  }
-
-  .delete-button {
-    grid-column: 2;
-    justify-self: start;
-  }
-}
