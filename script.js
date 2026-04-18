@@ -19,9 +19,11 @@ const progressFill = document.querySelector("#progressFill");
 const sectionMeta = document.querySelector("#sectionMeta");
 
 let state = loadState();
-const openNotes = new Set();
+let openPanelTaskId = null;
+let openPanelType = null;
 const editingNotes = new Set();
 const noteDrafts = new Map();
+const taskDrafts = new Map();
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -161,9 +163,7 @@ function addTask(name, time) {
 }
 
 function deleteTask(taskId) {
-  openNotes.delete(taskId);
-  editingNotes.delete(taskId);
-  noteDrafts.delete(taskId);
+  closePanels(taskId);
 
   state = {
     ...state,
@@ -174,32 +174,43 @@ function deleteTask(taskId) {
   render();
 }
 
-function openTaskNote(taskId) {
-  const task = state.tasks.find((entry) => entry.id === taskId);
-  openNotes.add(taskId);
-  editingNotes.delete(taskId);
-  noteDrafts.set(taskId, task ? task.note : "");
+function closePanels(taskId) {
+  if (!taskId || openPanelTaskId === taskId) {
+    openPanelTaskId = null;
+    openPanelType = null;
+  }
+
+  if (taskId) {
+    editingNotes.delete(taskId);
+    noteDrafts.delete(taskId);
+    taskDrafts.delete(taskId);
+  }
 }
 
-function closeTaskNote(taskId) {
-  openNotes.delete(taskId);
+function openNotePanel(taskId) {
+  const task = state.tasks.find((entry) => entry.id === taskId);
+  openPanelTaskId = taskId;
+  openPanelType = "note";
   editingNotes.delete(taskId);
-  noteDrafts.delete(taskId);
+  noteDrafts.set(taskId, task ? task.note : "");
+  taskDrafts.delete(taskId);
 }
 
 function toggleTaskNote(taskId) {
-  if (openNotes.has(taskId)) {
-    closeTaskNote(taskId);
+  if (openPanelTaskId === taskId && openPanelType === "note") {
+    closePanels(taskId);
   } else {
-    openTaskNote(taskId);
+    closePanels(openPanelTaskId);
+    openNotePanel(taskId);
   }
 
   render();
 }
 
-function enterEditMode(taskId) {
+function enterEditNoteMode(taskId) {
   const task = state.tasks.find((entry) => entry.id === taskId);
-  openNotes.add(taskId);
+  openPanelTaskId = taskId;
+  openPanelType = "note";
   editingNotes.add(taskId);
   noteDrafts.set(taskId, task ? task.note : "");
   render();
@@ -224,6 +235,59 @@ function saveTaskNote(taskId) {
   persistState();
   editingNotes.delete(taskId);
   noteDrafts.set(taskId, nextNote);
+  render();
+}
+
+function openEditPanel(taskId) {
+  const task = state.tasks.find((entry) => entry.id === taskId);
+  openPanelTaskId = taskId;
+  openPanelType = "edit";
+  editingNotes.delete(taskId);
+  noteDrafts.delete(taskId);
+  taskDrafts.set(taskId, {
+    name: task ? task.name : "",
+    time: task ? task.time : ""
+  });
+}
+
+function toggleTaskEdit(taskId) {
+  if (openPanelTaskId === taskId && openPanelType === "edit") {
+    closePanels(taskId);
+  } else {
+    closePanels(openPanelTaskId);
+    openEditPanel(taskId);
+  }
+
+  render();
+}
+
+function updateTaskDraft(taskId, field, value) {
+  const current = taskDrafts.get(taskId) || { name: "", time: "" };
+  taskDrafts.set(taskId, { ...current, [field]: value });
+}
+
+function saveTaskChanges(taskId) {
+  const draft = taskDrafts.get(taskId);
+  if (!draft) {
+    return;
+  }
+
+  const nextName = draft.name.trim();
+  if (!nextName) {
+    return;
+  }
+
+  state = {
+    ...state,
+    tasks: state.tasks.map((task) =>
+      task.id === taskId
+        ? { ...task, name: nextName, time: draft.time }
+        : task
+    )
+  };
+
+  persistState();
+  closePanels(taskId);
   render();
 }
 
@@ -262,11 +326,29 @@ function renderTaskNote(task, notePanel) {
   noteContent.classList.toggle("is-empty", !savedNote);
   noteInput.value = draftNote;
 
-  editNoteButton.onclick = () => enterEditMode(task.id);
+  editNoteButton.onclick = () => enterEditNoteMode(task.id);
   noteInput.oninput = (event) => {
     updateNoteDraft(task.id, event.target.value);
   };
   saveNoteButton.onclick = () => saveTaskNote(task.id);
+}
+
+function renderTaskEdit(task, editPanel) {
+  const nameInput = editPanel.querySelector(".edit-task-name");
+  const timeInput = editPanel.querySelector(".edit-task-time");
+  const saveTaskButton = editPanel.querySelector(".save-task-button");
+  const draft = taskDrafts.get(task.id) || { name: task.name, time: task.time };
+
+  nameInput.value = draft.name;
+  timeInput.value = draft.time;
+
+  nameInput.oninput = (event) => {
+    updateTaskDraft(task.id, "name", event.target.value);
+  };
+  timeInput.oninput = (event) => {
+    updateTaskDraft(task.id, "time", event.target.value);
+  };
+  saveTaskButton.onclick = () => saveTaskChanges(task.id);
 }
 
 function render() {
@@ -279,25 +361,32 @@ function render() {
     const toggle = fragment.querySelector(".toggle");
     const time = fragment.querySelector(".task-time");
     const name = fragment.querySelector(".task-name");
+    const editTaskButton = fragment.querySelector(".edit-task-button");
     const noteButton = fragment.querySelector(".note-button");
     const deleteButton = fragment.querySelector(".delete-button");
     const notePanel = fragment.querySelector(".note-panel");
+    const editPanel = fragment.querySelector(".edit-panel");
 
     const doneToday = isTaskDoneToday(task);
-    const noteIsOpen = openNotes.has(task.id);
+    const noteIsOpen = openPanelTaskId === task.id && openPanelType === "note";
+    const editIsOpen = openPanelTaskId === task.id && openPanelType === "edit";
 
     item.dataset.id = task.id;
     item.classList.toggle("is-complete", doneToday);
     item.classList.toggle("note-open", noteIsOpen);
+    item.classList.toggle("edit-open", editIsOpen);
 
     toggle.setAttribute("aria-pressed", String(doneToday));
     noteButton.setAttribute("aria-expanded", String(noteIsOpen));
+    editTaskButton.setAttribute("aria-expanded", String(editIsOpen));
     time.textContent = formatTime(task.time);
     name.textContent = task.name;
 
     renderTaskNote(task, notePanel);
+    renderTaskEdit(task, editPanel);
 
     toggle.onclick = () => setTaskDone(task.id, !doneToday);
+    editTaskButton.onclick = () => toggleTaskEdit(task.id);
     noteButton.onclick = () => toggleTaskNote(task.id);
     deleteButton.onclick = () => deleteTask(task.id);
 
