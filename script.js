@@ -1,10 +1,10 @@
 const STORAGE_KEY = "daily-routine-tracker-v1";
 
 const defaultTasks = [
-  { id: crypto.randomUUID(), name: "Wake up and stretch", time: "07:00", completedDays: {} },
-  { id: crypto.randomUUID(), name: "Drink water", time: "08:00", completedDays: {} },
-  { id: crypto.randomUUID(), name: "Go for a walk", time: "12:30", completedDays: {} },
-  { id: crypto.randomUUID(), name: "Read for 15 minutes", time: "20:30", completedDays: {} }
+  { id: crypto.randomUUID(), name: "Wake up and stretch", time: "07:00", note: "", completedDays: {} },
+  { id: crypto.randomUUID(), name: "Drink water", time: "08:00", note: "", completedDays: {} },
+  { id: crypto.randomUUID(), name: "Go for a walk", time: "12:30", note: "", completedDays: {} },
+  { id: crypto.randomUUID(), name: "Read for 15 minutes", time: "20:30", note: "", completedDays: {} }
 ];
 
 const taskForm = document.querySelector("#taskForm");
@@ -19,6 +19,7 @@ const progressFill = document.querySelector("#progressFill");
 const sectionMeta = document.querySelector("#sectionMeta");
 
 let state = loadState();
+const openNotes = new Set();
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
@@ -39,6 +40,7 @@ function loadState() {
         id: task.id || crypto.randomUUID(),
         name: String(task.name || "").trim() || "Untitled task",
         time: String(task.time || ""),
+        note: String(task.note || ""),
         completedDays: task.completedDays && typeof task.completedDays === "object" ? task.completedDays : {}
       }))
     };
@@ -156,6 +158,7 @@ function addTask(name, time) {
         id: crypto.randomUUID(),
         name,
         time,
+        note: "",
         completedDays: {}
       }
     ]
@@ -165,6 +168,7 @@ function addTask(name, time) {
 }
 
 function deleteTask(taskId) {
+  openNotes.delete(taskId);
   state = {
     ...state,
     tasks: state.tasks.filter((task) => task.id !== taskId)
@@ -173,83 +177,24 @@ function deleteTask(taskId) {
   render();
 }
 
-function updateProgress(sortedTasks) {
-  const total = sortedTasks.length;
-  const completed = sortedTasks.filter(isTaskDoneToday).length;
-  const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
-
-  progressPercent.textContent = `${percent}%`;
-  progressText.textContent = `${completed} of ${total} tasks complete`;
-  sectionMeta.textContent = total === 0
-    ? "Add your first routine item above."
-    : completed === total
-      ? "Everything for today is checked off."
-      : "Tap a circle to mark something done.";
-
-  progressFill.style.width = `${percent}%`;
-}
-
-function render() {
-  const sortedTasks = sortTasks(state.tasks);
-  taskList.innerHTML = "";
-
-  for (const task of sortedTasks) {
-    const fragment = taskTemplate.content.cloneNode(true);
-    const item = fragment.querySelector(".task-item");
-    const toggle = fragment.querySelector(".toggle");
-    const name = fragment.querySelector(".task-name");
-    const time = fragment.querySelector(".task-time");
-    const statusPill = fragment.querySelector(".status-pill");
-    const deleteButton = fragment.querySelector(".delete-button");
-
-    const doneToday = isTaskDoneToday(task);
-    const streak = getTaskStreak(task);
-
-    item.dataset.id = task.id;
-    item.classList.toggle("is-complete", doneToday);
-    name.textContent = task.name;
-    time.textContent = formatTime(task.time);
-    toggle.setAttribute("aria-pressed", String(doneToday));
-    statusPill.textContent = doneToday
-      ? streak > 1
-        ? `${streak} day streak`
-        : "Done today"
-      : streak > 0
-        ? `Last streak: ${streak} day${streak === 1 ? "" : "s"}`
-        : "Pending";
-
-    toggle.addEventListener("click", () => setTaskDone(task.id, !doneToday));
-    deleteButton.addEventListener("click", () => deleteTask(task.id));
-
-    taskList.appendChild(fragment);
+function toggleTaskNote(taskId) {
+  if (openNotes.has(taskId)) {
+    openNotes.delete(taskId);
+  } else {
+    openNotes.add(taskId);
   }
-
-  updateProgress(sortedTasks);
+  render();
 }
 
-taskForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const name = taskNameInput.value.trim();
-  const time = taskTimeInput.value;
-
-  if (!name) {
-    taskNameInput.focus();
-    return;
-  }
-
-  addTask(name, time);
-  taskForm.reset();
-  taskNameInput.focus();
-});
-
-formatTodayLabel();
-render();
-
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./service-worker.js").catch(() => {
-      // If registration fails, the app still works as a normal static site.
-    });
-  });
-}
+function saveTaskNote(taskId, note) {
+  state = {
+    ...state,
+    tasks: state.tasks.map((task) =>
+      task.id === taskId
+        ? { ...task, note }
+        : task
+    )
+  };
+  persistState();
+  openNotes.add(task
 
