@@ -63,24 +63,40 @@
     <li class="task-item">
       <div class="task-main">
         <button class="toggle" type="button" aria-label="Mark task complete"></button>
+        <span class="task-time"></span>
         <div class="task-copy">
-          <div class="task-topline">
-            <strong class="task-name"></strong>
-            <span class="task-time"></span>
-          </div>
-          <div class="task-meta">
-            <span class="status-pill">Pending</span>
-          </div>
+          <strong class="task-name"></strong>
+          <span class="status-pill">Pending</span>
         </div>
         <div class="task-actions">
-          <button class="note-button" type="button" aria-label="Add note">Add Note</button>
-          <button class="delete-button" type="button" aria-label="Delete task">Delete</button>
+          <button class="icon-button note-button" type="button" aria-label="Open notes" title="Notes">ℹ️</button>
+          <button class="icon-button delete-button" type="button" aria-label="Delete task" title="Delete task">🗑️</button>
         </div>
       </div>
-      <div class="note-panel"></div>
+      <div class="note-panel">
+        <div class="note-panel-inner">
+          <div class="note-view">
+            <div class="note-view-header">
+              <span class="note-label">Note</span>
+              <button class="icon-button edit-note-button" type="button" aria-label="Edit note" title="Edit note">✏️</button>
+            </div>
+            <p class="note-content">No note added</p>
+          </div>
+          <div class="note-edit" hidden>
+            <label class="note-field">
+              <span class="note-label">Edit Note</span>
+              <textarea class="note-input" rows="4" placeholder="Add a note or description for this task..."></textarea>
+            </label>
+            <div class="note-edit-actions">
+              <button class="save-note-button" type="button">Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </li>
   </template>
 
   <script src="script.js"></script>
 </body>
 </html>
+
