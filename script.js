@@ -316,12 +316,12 @@ function renderTaskNote(task, notePanel) {
   const noteInput = notePanel.querySelector(".note-input");
   const saveNoteButton = notePanel.querySelector(".save-note-button");
 
-  const isEditing = editingNotes.has(task.id);
+  const shouldShowEdit = editingNotes.has(task.id) && openPanelTaskId === task.id && openPanelType === "note";
   const savedNote = task.note.trim();
   const draftNote = noteDrafts.has(task.id) ? noteDrafts.get(task.id) : task.note;
 
-  noteView.hidden = isEditing;
-  noteEdit.hidden = !isEditing;
+  noteView.hidden = shouldShowEdit;
+  noteEdit.hidden = !shouldShowEdit;
   noteContent.textContent = savedNote || "No note added";
   noteContent.classList.toggle("is-empty", !savedNote);
   noteInput.value = draftNote;
