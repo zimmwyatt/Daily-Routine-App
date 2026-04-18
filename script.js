@@ -12,8 +12,6 @@ const taskNameInput = document.querySelector("#taskName");
 const taskTimeInput = document.querySelector("#taskTime");
 const taskList = document.querySelector("#taskList");
 const taskTemplate = document.querySelector("#taskTemplate");
-const resetDayButton = document.querySelector("#resetDayButton");
-const clearDoneButton = document.querySelector("#clearDoneButton");
 const todayLabel = document.querySelector("#todayLabel");
 const progressPercent = document.querySelector("#progressPercent");
 const progressText = document.querySelector("#progressText");
@@ -175,29 +173,6 @@ function deleteTask(taskId) {
   render();
 }
 
-function resetToday() {
-  const todayKey = getTodayKey();
-  state = {
-    ...state,
-    tasks: state.tasks.map((task) => {
-      const completedDays = { ...task.completedDays };
-      delete completedDays[todayKey];
-      return { ...task, completedDays };
-    })
-  };
-  persistState();
-  render();
-}
-
-function clearCompleted() {
-  state = {
-    ...state,
-    tasks: state.tasks.filter((task) => !isTaskDoneToday(task))
-  };
-  persistState();
-  render();
-}
-
 function updateProgress(sortedTasks) {
   const total = sortedTasks.length;
   const completed = sortedTasks.filter(isTaskDoneToday).length;
@@ -266,9 +241,6 @@ taskForm.addEventListener("submit", (event) => {
   taskForm.reset();
   taskNameInput.focus();
 });
-
-resetDayButton.addEventListener("click", resetToday);
-clearDoneButton.addEventListener("click", clearCompleted);
 
 formatTodayLabel();
 render();
