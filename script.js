@@ -172,3 +172,5 @@ function addTask(name, time) {
 function deleteTask(taskId) {
   openNotes.delete(taskId);
   editingNotes.delete
+
+  // redeploy fix
