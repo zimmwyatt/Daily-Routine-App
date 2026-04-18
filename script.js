@@ -25,6 +25,7 @@ const noteDrafts = new Map();
 
 function loadState() {
   const saved = localStorage.getItem(STORAGE_KEY);
+
   if (!saved) {
     const initialState = { tasks: defaultTasks };
     persistState(initialState);
@@ -33,7 +34,7 @@ function loadState() {
 
   try {
     const parsed = JSON.parse(saved);
-    if (!Array.isArray(parsed.tasks)) {
+    if (!parsed || !Array.isArray(parsed.tasks)) {
       throw new Error("Invalid saved data");
     }
 
@@ -43,7 +44,10 @@ function loadState() {
         name: String(task.name || "").trim() || "Untitled task",
         time: String(task.time || ""),
         note: String(task.note || ""),
-        completedDays: task.completedDays && typeof task.completedDays === "object" ? task.completedDays : {}
+        completedDays:
+          task.completedDays && typeof task.completedDays === "object"
+            ? task.completedDays
+            : {}
       }))
     };
   } catch {
@@ -114,6 +118,7 @@ function isTaskDoneToday(task) {
 
 function setTaskDone(taskId, done) {
   const todayKey = getTodayKey();
+
   state = {
     ...state,
     tasks: state.tasks.map((task) => {
@@ -131,6 +136,7 @@ function setTaskDone(taskId, done) {
       return { ...task, completedDays };
     })
   };
+
   persistState();
   render();
 }
@@ -165,11 +171,195 @@ function addTask(name, time) {
       }
     ]
   };
+
   persistState();
   render();
 }
 
 function deleteTask(taskId) {
   openNotes.delete(taskId);
-  editingNotes.delete
+  editingNotes.delete(taskId);
+  noteDrafts.delete(taskId);
+
+  state = {
+    ...state,
+    tasks: state.tasks.filter((task) => task.id !== taskId)
+  };
+
+  persistState();
+  render();
+}
+
+function openTaskNote(taskId) {
+  const task = state.tasks.find((entry) => entry.id === taskId);
+  openNotes.add(taskId);
+  editingNotes.delete(taskId);
+  noteDrafts.set(taskId, task ? task.note : "");
+}
+
+function closeTaskNote(taskId) {
+  openNotes.delete(taskId);
+  editingNotes.delete(taskId);
+  noteDrafts.delete(taskId);
+}
+
+function toggleTaskNote(taskId) {
+  if (openNotes.has(taskId)) {
+    closeTaskNote(taskId);
+  } else {
+    openTaskNote(taskId);
+  }
+
+  render();
+}
+
+function enterEditMode(taskId) {
+  const task = state.tasks.find((entry) => entry.id === taskId);
+  openNotes.add(taskId);
+  editingNotes.add(taskId);
+  noteDrafts.set(taskId, task ? task.note : "");
+  render();
+}
+
+function updateNoteDraft(taskId, value) {
+  noteDrafts.set(taskId, value);
+}
+
+function saveTaskNote(taskId) {
+  const nextNote = (noteDrafts.get(taskId) || "").trim();
+
+  state = {
+    ...state,
+    tasks: state.tasks.map((task) =>
+      task.id === taskId
+        ? { ...task, note: nextNote }
+        : task
+    )
+  };
+
+  persistState();
+  editingNotes.delete(taskId);
+  noteDrafts.set(taskId, nextNote);
+  render();
+}
+
+function updateProgress(sortedTasks) {
+  const total = sortedTasks.length;
+  const completed = sortedTasks.filter(isTaskDoneToday).length;
+  const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+  progressPercent.textContent = `${percent}%`;
+  progressText.textContent = `${completed} of ${total} tasks complete`;
+  sectionMeta.textContent =
+    total === 0
+      ? "Add your first routine item above."
+      : completed === total
+        ? "Everything for today is checked off."
+        : "Tap a circle to mark something done.";
+
+  progressFill.style.width = `${percent}%`;
+}
+
+function renderTaskNote(task, notePanel) {
+  const noteView = notePanel.querySelector(".note-view");
+  const noteEdit = notePanel.querySelector(".note-edit");
+  const noteContent = notePanel.querySelector(".note-content");
+  const editNoteButton = notePanel.querySelector(".edit-note-button");
+  const noteInput = notePanel.querySelector(".note-input");
+  const saveNoteButton = notePanel.querySelector(".save-note-button");
+
+  const isEditing = editingNotes.has(task.id);
+  const savedNote = task.note.trim();
+  const draftNote = noteDrafts.has(task.id) ? noteDrafts.get(task.id) : task.note;
+
+  noteView.hidden = isEditing;
+  noteEdit.hidden = !isEditing;
+
+  noteContent.textContent = savedNote || "No note added";
+  noteContent.classList.toggle("is-empty", !savedNote);
+
+  noteInput.value = draftNote;
+
+  editNoteButton.addEventListener("click", () => enterEditMode(task.id));
+  noteInput.addEventListener("input", (event) => {
+    updateNoteDraft(task.id, event.target.value);
+  });
+  saveNoteButton.addEventListener("click", () => saveTaskNote(task.id));
+}
+
+function render() {
+  const sortedTasks = sortTasks(state.tasks);
+  taskList.innerHTML = "";
+
+  for (const task of sortedTasks) {
+    const fragment = taskTemplate.content.cloneNode(true);
+    const item = fragment.querySelector(".task-item");
+    const toggle = fragment.querySelector(".toggle");
+    const time = fragment.querySelector(".task-time");
+    const name = fragment.querySelector(".task-name");
+    const statusPill = fragment.querySelector(".status-pill");
+    const noteButton = fragment.querySelector(".note-button");
+    const deleteButton = fragment.querySelector(".delete-button");
+    const notePanel = fragment.querySelector(".note-panel");
+
+    const doneToday = isTaskDoneToday(task);
+    const streak = getTaskStreak(task);
+    const noteIsOpen = openNotes.has(task.id);
+
+    item.dataset.id = task.id;
+    item.classList.toggle("is-complete", doneToday);
+    item.classList.toggle("note-open", noteIsOpen);
+
+    toggle.setAttribute("aria-pressed", String(doneToday));
+    noteButton.setAttribute("aria-expanded", String(noteIsOpen));
+
+    time.textContent = formatTime(task.time);
+    name.textContent = task.name;
+
+    statusPill.textContent = doneToday
+      ? streak > 1
+        ? `${streak} day streak`
+        : "Done today"
+      : streak > 0
+        ? `Last streak: ${streak} day${streak === 1 ? "" : "s"}`
+        : "Pending";
+
+    renderTaskNote(task, notePanel);
+
+    toggle.addEventListener("click", () => setTaskDone(task.id, !doneToday));
+    noteButton.addEventListener("click", () => toggleTaskNote(task.id));
+    deleteButton.addEventListener("click", () => deleteTask(task.id));
+
+    taskList.appendChild(fragment);
+  }
+
+  updateProgress(sortedTasks);
+}
+
+taskForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const name = taskNameInput.value.trim();
+  const time = taskTimeInput.value;
+
+  if (!name) {
+    taskNameInput.focus();
+    return;
+  }
+
+  addTask(name, time);
+  taskForm.reset();
+  taskNameInput.focus();
+});
+
+formatTodayLabel();
+render();
+
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {
+      // If registration fails, the app still works as a normal static site.
+    });
+  });
+}
 
